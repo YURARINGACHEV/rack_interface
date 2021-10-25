@@ -2,43 +2,64 @@ require_relative 'converter'
 
 class Timeformat
 
-  FORMAT = ["year", "month", "day", "hour", "minute", "second"]
+  TIME_URL = '/time'
 
   def initialize(app)
     @app = app
   end
 
   def call(env)
-    @status, @headers, @body = @app.call(env)    
-    request_parameters(env)   
+    request = Rack::Request.new(env)
+    request_params = request.params['format']
+
+    if request.path != TIME_URL
+      body = request_params.nil? ? body_unknown : body_bad_url
+      response(status_error, headers, body)
+    else
+      time_request(request_params)
+    end
   end 
 
-  def request_parameters(env)
-    request = Rack::Request.new(env)
-    path  = request.path
-    request_params = request.params['format']
-    formattime = Converter.new(request_params)  
-    format_check(path, request_params, formattime )
+  private
+
+  def time_request(request_params)
+
+    time_formatter = Converter.new(request_params)
+    time_formatter.call
+    if time_formatter.validation?
+      response(status_success, headers, "#{time_formatter.valid_formats}\n")
+    else
+      response(status_error, headers, "#{time_formatter.unknown_formats}\n")
+    end
   end
 
-  def format_check(path, request_params, formattime)
-    
-      if path == '/time'
-        if request_params.nil?
-          @status = 404
-          @headers['timeformat'] = "Unknown format"  
-        elsif formattime.valid?
-          @headers['timeformat'] = formattime.convert_user_format
-        else
-          @status = 400
-          @headers['timeformat'] = "Unknown time format #{formattime.invalid_params}"
-        end
-      else
-        @status = 400
-        @headers['timeformat'] = "Unknown format" 
-      end
-      [@status, @headers, @body]
+  def response(status, headers, body)
+    response = Rack::Response.new(body, status, headers)
+    response.finish
   end
 
+  def status_error
+    404
+  end
+
+  def status_success
+    200
+  end
+
+  def headers
+    { 'Content-Type' => 'text/plain' }
+  end
+
+  def  body
+    ["Welcome aboard!\n"]
+  end
+
+  def  body_unknown
+    ["Unknown time format\n"]
+  end
+
+  def  body_bad_url
+    ["Bad url\n"]
+  end
 
 end

@@ -1,27 +1,34 @@
 class Converter
 
-  TIMEFORMAT = { 'year'=> Time.now.year, 
-                  'month'=> Time.now.month, 
-                  'day'=> Time.now.day, 
-                  'hour'=> Time.now.hour, 
-                  'minute'=> Time.now.min, 
-                  'second'=> Time.now.sec }
+  TIME_FORMAT = {'year'=> '%Y', 'month'=> '%m', 'day'=> '%d', 'hour'=> '%H', 'minute'=> '%m', 'second'=> '%S'}
   
-  attr_reader :params
+  attr_reader :unknown_formats
 
   def initialize(params)
     @params = params.split(',')
+    @valid_formats = []
+    @unknown_formats = []
   end
 
-  def convert_user_format
-    (@params.map { |t| TIMEFORMAT[t] }).join("-")
+  def call
+    @params.each do |f|
+      if TIME_FORMAT.key?(f)
+        @valid_formats << TIME_FORMAT[f]
+      else
+        @unknown_formats << f
+      end
+    end
+  end
+
+  def valid_formats
+    Time.now.strftime(@valid_formats.join('-'))
   end
 
   def invalid_params
-    self.params - TIMEFORMAT.keys
+    @params - TIME_FORMAT.keys
   end
 
-  def valid?
+  def validation?
     invalid_params.empty?
   end
 
