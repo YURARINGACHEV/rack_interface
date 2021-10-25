@@ -26,7 +26,7 @@ class Timeformat
 
     time_formatter = Converter.new(request_params)
     time_formatter.call
-    if time_formatter.validation?
+    if time_formatter.success?
       response(status_success, headers, "#{time_formatter.valid_formats}\n")
     else
       response(status_error, headers, "#{time_formatter.unknown_formats}\n")

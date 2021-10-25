@@ -28,7 +28,7 @@ class Converter
     @params - TIME_FORMAT.keys
   end
 
-  def validation?
+  def success?
     invalid_params.empty?
   end
 
